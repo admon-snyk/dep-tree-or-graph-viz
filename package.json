@@ -1,0 +1,24 @@
+{
+  "name": "graphvizonline",
+  "version": "1.0.0",
+  "description": "Author: [dreampuf](https://github.com/dreampuf/)",
+  "main": "full.render.js",
+  "scripts": {
+    "build": "browserify main.js -o bundle.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/admon-synk/GraphvizOnline.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/admon-synk/GraphvizOnline/issues"
+  },
+  "homepage": "https://github.com/admon-synk/GraphvizOnline#readme",
+  "dependencies": {
+    "@snyk/dep-graph": "^1.23.1",
+    "browserify": "^17.0.0",
+    "graphlib-dot": "^0.6.4"
+  }
+}

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>Graphviz Online</title>
+    <title>DepGraphViz Online</title>
     <style type="text/css" media="screen">
         body {
             overflow: hidden;
@@ -114,33 +114,84 @@
     </style>
 </head>
 <body>
-<pre id="editor">digraph G {
-
-  subgraph cluster_0 {
-    style=filled;
-    color=lightgrey;
-    node [style=filled,color=white];
-    a0 -> a1 -> a2 -> a3;
-    label = "process #1";
+<pre id="editor">{
+  "schemaVersion": "1.2.0",
+  "pkgManager": {
+    "name": "pip"
+  },
+  "pkgs": [
+    {
+      "id": "toor@1.0.0",
+      "info": {
+        "name": "toor",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "id": "foo@2",
+      "info": {
+        "name": "foo",
+        "version": "2"
+      }
+    },
+    {
+      "id": "bar@3",
+      "info": {
+        "name": "bar",
+        "version": "3"
+      }
+    },
+    {
+      "id": "baz@4",
+      "info": {
+        "name": "baz",
+        "version": "4"
+      }
+    }
+  ],
+  "graph": {
+    "rootNodeId": "toor",
+    "nodes": [
+      {
+        "nodeId": "toor",
+        "pkgId": "toor@1.0.0",
+        "deps": [
+          {
+            "nodeId": "foo@2|x"
+          }
+        ]
+      },
+      {
+        "nodeId": "foo@2|x",
+        "pkgId": "foo@2",
+        "deps": [
+          {
+            "nodeId": "bar@3|x"
+          }
+        ]
+      },
+      {
+        "nodeId": "bar@3|x",
+        "pkgId": "bar@3",
+        "deps": [
+          {
+            "nodeId": "baz@4|x"
+          }
+        ]
+      },
+      {
+        "nodeId": "baz@4|x",
+        "pkgId": "baz@4",
+        "deps": [
+          {
+            "nodeId": "foo@2|x"
+          }
+        ]
+      }
+    ]
   }
-
-  subgraph cluster_1 {
-    node [style=filled];
-    b0 -> b1 -> b2 -> b3;
-    label = "process #2";
-    color=blue
-  }
-  start -> a0;
-  start -> b0;
-  a1 -> b3;
-  b2 -> a3;
-  a3 -> a0;
-  a3 -> end;
-  b3 -> end;
-
-  start [shape=Mdiamond];
-  end [shape=Msquare];
-}</pre>
+}
+</pre>
 <div id="options">
     <label id="engine">
         Engine:
@@ -173,6 +224,9 @@
     <label>
         <input type="button" value="Share" id="share">
     </label>
+    <label>
+        <input type="button" value="Open in new window" id="new_window">
+    </label>
 
     <input type="input" value="" id="shareurl">
 
@@ -187,6 +241,8 @@
     </div>
 </div>
 
+<script src="https://dagrejs.github.io/project/graphlib/latest/graphlib.js" type="text/javascript" charset="utf-8"></script>
+<script src="bundle.js" type="text/javascript" charset="utf-8"></script>
 <script src="ace/ace.js" type="text/javascript" charset="utf-8"></script>
 <script>
   (function (document) {
@@ -302,7 +358,7 @@
       return result;
     };
 
-    function renderGraph() {
+    async function renderGraph() {
       reviewer.classList.add("working");
       reviewer.classList.remove("error");
 
@@ -325,10 +381,11 @@
       worker.addEventListener('error', function (e) {
         show_error(e.detail);
       }, false);
-
+      let depGraphData = editor.getSession().getDocument().getValue();
+      let graph = await createFromJSON(depGraphData)
       show_status("rendering...");
-      var params = {
-        "src": editor.getSession().getDocument().getValue(),
+        var params = {
+        "src": graph,
         "id": new Date().toJSON(),
         "options": {
           "files": [],
@@ -389,6 +446,7 @@
         // https://stackoverflow.com/questions/18925210/download-blob-content-using-specified-charset
         //const blob = new Blob(["\ufeff", svg], {type: 'image/svg+xml;charset=utf-8'});
         const url = "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(source);
+        window.graphUrl = url;
         var a = document.createElement("a");
         a.href = url;
         a.target = "_blank";
@@ -397,6 +455,7 @@
         reviewer.appendChild(a);
       } else if (formatEl.value == "png-image-element") {
         var resultWithPNGHeader = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(result)));
+          window.graphUrl = resultWithPNGHeader;
         svgXmlToImage(resultWithPNGHeader, function (err, image) {
           if (err) {
             show_error(err)
@@ -437,6 +496,13 @@
     engineEl.addEventListener("change", renderGraph);
     rawEl.addEventListener("change", renderGraph);
     share.addEventListener("click", copyShareURL);
+    new_window.addEventListener("click", () => {
+        var image = new Image();
+        image.src = window.graphUrl;
+
+        var w = window.open(null, "_blank");
+        w.document.write(image.outerHTML);
+  })
 
 		// Since apparently HTMLCollection does not implement the oh so convenient array functions
 		HTMLOptionsCollection.prototype.indexOf = function(name) {
